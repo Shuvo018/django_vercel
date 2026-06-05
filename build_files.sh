@@ -11,4 +11,3 @@ python -m venv "$VENV_DIR"
 
 # Run collectstatic with the venv Python
 "$VENV_PY" manage.py collectstatic --noinput
-
