@@ -80,6 +80,7 @@ WSGI_APPLICATION = 'blog_main.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+from django.core.exceptions import ImproperlyConfigured
 from urllib.parse import urlparse
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -96,16 +97,34 @@ if DATABASE_URL:
         }
     }
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-            'NAME': os.environ.get('DB_NAME', 'maddhom'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', '1234'),
-            'HOST': os.environ.get('DB_HOST', ''),
-            'PORT': os.environ.get('DB_PORT', '5432'),
+    db_engine = os.environ.get('DB_ENGINE')
+    if db_engine == 'django.db.backends.postgresql':
+        db_host = os.environ.get('DB_HOST')
+        db_name = os.environ.get('DB_NAME')
+        db_user = os.environ.get('DB_USER')
+        db_password = os.environ.get('DB_PASSWORD')
+        db_port = os.environ.get('DB_PORT', '5432')
+        if not db_host or not db_name or not db_user or not db_password:
+            raise ImproperlyConfigured(
+                'PostgreSQL on Vercel requires DATABASE_URL or DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, and DB_PORT environment variables.'
+            )
+        DATABASES = {
+            'default': {
+                'ENGINE': db_engine,
+                'NAME': db_name,
+                'USER': db_user,
+                'PASSWORD': db_password,
+                'HOST': db_host,
+                'PORT': db_port,
+            }
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 
 # Password validation
